@@ -1,5 +1,7 @@
-# Getting Started with Create React App
+# js-calculator
+HTML, JavaScript, CSS, Bootstrap, SASS and jQuery. Frontend framework: React, Redux
 
+# Getting Started with Create React App
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

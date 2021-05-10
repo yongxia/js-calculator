@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
+//Redux
 
+//React
 class Presentational extends React.Component {
   constructor(props) {
     super(props);
@@ -15,8 +17,8 @@ class Presentational extends React.Component {
     return (
       <div className='number-group'>
         <div id="box">
+          <div id="formula">13123-2+2=345</div>
           <div id="display">{this.state.display}</div>
-          <div id="formula"></div>
         </div>
         <button id="clear">AC</button>
         <button id="divide">/</button>
