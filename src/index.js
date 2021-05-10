@@ -1,24 +1,77 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { createStore } from 'redux';
 import './index.css';
+import { connect, Provider } from 'react-redux'
 
 //Redux
+const MESSAGES = 'MESSAGES';
+const RESULT = 'RESULT';
+const CLEAR = 'CLEAR';
+
+const addMessage = (message) => ({
+  type: MESSAGES,
+  message
+});
+
+const showResult = () => ({
+  type: RESULT
+});
+
+const clear = () => ({
+  type: CLEAR
+});
+
+const INTIAL_STATE = ({
+  messages: [],
+  result: 0,
+  reset: false
+});
+
+const calculatorReducer = (state = INTIAL_STATE, action) => {
+  switch (action.type) {
+    case MESSAGES:
+      return { ...state, messages: [...state.messages, action.message] };
+    case RESULT:
+      let result = 1;
+      return { ...state, result: result };
+    case CLEAR:
+      return INTIAL_STATE;
+    default:
+      return state;
+  }
+}
+
+const mapStateToProps = state => {
+  return {
+    messages: state.messages,
+    result: state.result,
+    reset: state.reset
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    addNewMessage: (message) => dispatch(addMessage(message)),
+    updateResult: () => { dispatch(showResult()) },
+    reset: () => dispatch(clear()),
+  }
+}
 
 //React
 class Presentational extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      display: 0
-    }
   }
+
   render() {
 
     return (
       <div className='number-group'>
         <div id="box">
-          <div id="formula">13123-2+2=345</div>
-          <div id="display">{this.state.display}</div>
+          <div id="formula">{this.props.messages.join("")}</div>
+          <div id="display">{this.props.result}</div>
         </div>
         <button id="clear">AC</button>
         <button id="divide">/</button>
@@ -41,24 +94,21 @@ class Presentational extends React.Component {
         <button id="equals">=</button>
         <button id="zero">0</button>
         <button id="decimal">.</button>
-
       </div>
     )
   }
 }
 
-class Number extends React.Component {
+//react-dedux
+const store = createStore(calculatorReducer);
+const Container = connect(mapStateToProps, mapDispatchToProps)(Presentational);
 
-  constructor(props) {
-    super(props);
-  }
+class CalculatorWrapper extends React.Component {
+  render = () => (
+    <Provider store={store}>
+      <Container />
+    </Provider>
+  )
+}
 
-  render() {
-    return <Presentational />;
-  }
-
-};
-
-ReactDOM.render(
-  <Presentational />,
-  document.getElementById('root'))
+ReactDOM.render(<CalculatorWrapper />, document.getElementById('root'))
