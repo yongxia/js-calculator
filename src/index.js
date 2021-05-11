@@ -5,19 +5,18 @@ import { createStore } from 'redux';
 import { devToolsEnhancer } from 'redux-devtools-extension';
 import './index.css';
 import { connect, Provider } from 'react-redux'
-import { composeWithDevTools } from 'remote-redux-devtools'
 
 //Redux
 const MESSAGES = 'MESSAGES',
   RESULT = 'RESULT',
   CLEAR = 'CLEAR';
 
-const addMessage = (message) => ({
+const addMessage = message => ({
   type: MESSAGES,
   message
 });
 
-const showResult = () => ({
+const addResult = () => ({
   type: RESULT
 });
 
@@ -28,15 +27,15 @@ const clear = () => ({
 const INTIAL_STATE = ({
   messages: [],
   result: 0,
-  reset: false,
   parser: '' //--123+ parse to messages:['-', '-123'], parser: '+'
 });
 
+
 const calculatorReducer = (state = INTIAL_STATE, action) => {
+  let messages = [...state.messages];
+  let parser = state.parser;
   switch (action.type) {
     case MESSAGES:
-      let messages = [...state.messages];
-      let parser = state.parser;
       parser += action.message;
       //reset to last operator (case: +/* followed by any operator, or - followed by +*/)
       if (/^[+/*][+/*-]/.test(parser) || /^-[+/*]/.test(parser)) {
@@ -44,8 +43,19 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
         //reset to last operator (case: -- foloweed by any operator)
       } else if (/^--[+/*-]/.test(parser)) {
         parser = parser.substr(2);
+        // hanlde multiple zeros in beging of a number, allow 0. for float
+      } else if (! /\d+[+*/-]$/.test(parser)) {
+        if (/^[^1-9]+0+[1-9]$/.test(parser)) {
+          parser = parser.replace(/0+/, '');
+        } else if (/^[+*/-]+[^1-9]0+\.$/.test(parser)) {
+          parser = parser.replace(/0+/, '0');
+        }
+        // only show one dot for float number
+        if (parser.endsWith('..')) {
+          parser = parser.replace('..', '.');
+        }
         //meet condition for parsing, ends with at least one digit and an operator
-      } else if (/\d+[+*/-]$/.test(parser)) {
+      } else {
         //at the very beginng, there might not be an operator in parser
         if (/^[+/*-]/.test(parser)) {
           messages.push(parser.charAt(0));
@@ -62,8 +72,23 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       }
       return { ...state, messages: messages, parser: parser };
     case RESULT:
+      //consume remaining parser if any
+      console.log('remaning', parser);
+      if (/^[+*/-]/.test(parser)) {
+        messages.push(parser.charAt(0));
+        parser = parser.substring(1);
+        if (parser.length > 0) {
+          if (parser.includes('.')) {
+            messages.push(parseFloat(parser));
+          } else {
+            messages.push(parseInt(parser));
+          }
+          parser = '';
+        }
+      }
+      console.log(messages);
       let result = 1;
-      return { ...state, result: result };
+      return { ...state, messages: messages, parser: parser, result: result };
     case CLEAR:
       return INTIAL_STATE;
     default:
@@ -75,16 +100,15 @@ const mapStateToProps = state => {
   return {
     messages: state.messages,
     result: state.result,
-    reset: state.reset,
     parser: state.parser
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    addNewMessage: (message) => dispatch(addMessage(message)),
-    updateResult: () => { dispatch(showResult()) },
-    reset: () => dispatch(clear())
+    addNewMessage: message => { dispatch(addMessage(message)) },
+    updateResult: () => { dispatch(addResult()) },
+    reset: () => { dispatch(clear()) }
   }
 }
 
@@ -94,14 +118,19 @@ class Presentational extends React.Component {
     super(props);
     this.resetHandler = this.resetHandler.bind(this);
     this.clickHandler = this.clickHandler.bind(this);
+    this.clickEqualsHandler = this.clickEqualsHandler.bind(this);
   }
 
   resetHandler = () => {
     this.props.reset();
   }
 
-  clickHandler = (e) => {
+  clickHandler = e => {
     this.props.addNewMessage(e.target.value);
+  }
+
+  clickEqualsHandler = () => {
+    this.props.updateResult();
   }
 
   render() {
@@ -131,7 +160,7 @@ class Presentational extends React.Component {
           <button id="two" onClick={this.clickHandler} value="2">2</button>
           <button id="three" onClick={this.clickHandler} value="3">3</button>
 
-          <button id="equals" onClick={this.clickHandler}>=</button>
+          <button id="equals" onClick={this.clickEqualsHandler}>=</button>
           <button id="zero" onClick={this.clickHandler} value="0">0</button>
           <button id="decimal" onClick={this.clickHandler} value=".">.</button>
         </div>
