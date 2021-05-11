@@ -2,13 +2,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
+import { devToolsEnhancer } from 'redux-devtools-extension';
 import './index.css';
 import { connect, Provider } from 'react-redux'
+import { composeWithDevTools } from 'remote-redux-devtools'
 
 //Redux
-const MESSAGES = 'MESSAGES';
-const RESULT = 'RESULT';
-const CLEAR = 'CLEAR';
+const MESSAGES = 'MESSAGES',
+  RESULT = 'RESULT',
+  CLEAR = 'CLEAR';
 
 const addMessage = (message) => ({
   type: MESSAGES,
@@ -24,18 +26,41 @@ const clear = () => ({
 });
 
 const INTIAL_STATE = ({
-  messages: '',
+  messages: [],
   result: 0,
-  reset: false
+  reset: false,
+  parser: '' //--123+ parse to messages:['-', '-123'], parser: '+'
 });
 
 const calculatorReducer = (state = INTIAL_STATE, action) => {
   switch (action.type) {
     case MESSAGES:
-      let messages = state.messages + action.message;
-      let reOperation = /[\+\-\*\/]+$/;
-      messages = messages.replace(reOperation, messages.charAt(messages.length - 1));
-      return { ...state, messages: messages };
+      let messages = [...state.messages];
+      let parser = state.parser;
+      parser += action.message;
+      //reset to last operator (case: +/* followed by any operator, or - followed by +*/)
+      if (/^[+/*][+/*-]/.test(parser) || /^-[+/*]/.test(parser)) {
+        parser = parser.substr(1);
+        //reset to last operator (case: -- foloweed by any operator)
+      } else if (/^--[+/*-]/.test(parser)) {
+        parser = parser.substr(2);
+        //meet condition for parsing, ends with at least one digit and an operator
+      } else if (/\d+[+*/-]$/.test(parser)) {
+        //at the very beginng, there might not be an operator in parser
+        if (/^[+/*-]/.test(parser)) {
+          messages.push(parser.charAt(0));
+          parser = parser.substring(1); //consume operator, '--1.23+' => '-1.23+' , messages:['-']
+        }
+        //continue consume parser number part, messages: ['-',-1.23], parser: '+'
+        if (parser.includes('.')) {
+          messages.push(parseFloat(parser.substring(0, parser.length - 1)));
+        } else {
+          messages.push(parseInt(parser.substring(0, parser.length - 1)));
+        }
+        //update parser for next parse
+        parser = parser.substring(parser.length - 1);
+      }
+      return { ...state, messages: messages, parser: parser };
     case RESULT:
       let result = 1;
       return { ...state, result: result };
@@ -50,7 +75,8 @@ const mapStateToProps = state => {
   return {
     messages: state.messages,
     result: state.result,
-    reset: state.reset
+    reset: state.reset,
+    parser: state.parser
   }
 }
 
@@ -58,7 +84,7 @@ const mapDispatchToProps = dispatch => {
   return {
     addNewMessage: (message) => dispatch(addMessage(message)),
     updateResult: () => { dispatch(showResult()) },
-    reset: () => dispatch(clear()),
+    reset: () => dispatch(clear())
   }
 }
 
@@ -76,13 +102,6 @@ class Presentational extends React.Component {
 
   clickHandler = (e) => {
     this.props.addNewMessage(e.target.value);
-
-
-    //let curMessages = [this.props.messages.split(""), e.target.value].join("");
-    //console.log(curMessages, /\*[+\-\*/]{2}$/.match(curMessages))
-    //only keep last operaion except for - for negative number
-    //curMessages = curMessages.replace(/\*[+-\*/]{2}$/, '$1', 'hi');
-
   }
 
   render() {
@@ -91,7 +110,7 @@ class Presentational extends React.Component {
       <div className="container">
         <div className='box-group'>
           <div className="screen">
-            <div id="formula">{this.props.messages}</div>
+            <div id="formula">{this.props.messages.join("") + this.props.parser}</div>
             <div id="display">{this.props.result}</div>
           </div>
           <button id="clear" onClick={this.resetHandler}>AC</button>
@@ -123,8 +142,10 @@ class Presentational extends React.Component {
 }
 
 //react-dedux
-const store = createStore(calculatorReducer);
+const store = createStore(calculatorReducer, devToolsEnhancer());
 const Container = connect(mapStateToProps, mapDispatchToProps)(Presentational);
+
+
 
 class CalculatorWrapper extends React.Component {
   render = () => (
