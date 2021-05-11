@@ -36,6 +36,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
   let parser = state.parser;
   switch (action.type) {
     case MESSAGES:
+      if (messages.includes('=')) return state; // clear AC to start with a new cacluation
       parser += action.message;
       //reset to last operator (case: +/* followed by any operator, or - followed by +*/)
       if (/^[+/*][+/*-]/.test(parser) || /^-[+/*]/.test(parser)) {
@@ -72,8 +73,8 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       }
       return { ...state, messages: messages, parser: parser };
     case RESULT:
+      if (messages.includes('=')) return state; // clear AC to start with a new cacluation
       //consume remaining parser if any
-      console.log('remaning', parser);
       if (/^[+*/-]/.test(parser)) {
         messages.push(parser.charAt(0));
         parser = parser.substring(1);
@@ -86,8 +87,54 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
           parser = '';
         }
       }
+      //calulate result Formula/Expression Logic
+      if (messages.length <= 1) return state;
+      if (/^[*/]/.test(messages[0])) return state; //click AC to fix the formular no left
       console.log(messages);
-      let result = 1;
+      let reducer = [...messages];
+      //TODO
+      while (reducer.includes('*') || reducer.includes('/')) {
+        let i = 1;
+        while (i < reducer.length) {
+          if (/[*|/]/.test(reducer[i])) {
+            let left = reducer[i - 1];
+            let operator = reducer[i];
+            if (i + 1 === reducer.length) {
+              reducer.splice(i - 1, 2, left)
+              break;
+            } else {
+              let right = reducer[i + 1];
+              let result = operator === '*' ? left * right : Math.round(left / right * 10000) / 10000;
+              reducer.splice(i - 1, 3, result)
+            }
+          }
+          i++;
+          console.log('reduced', reducer);
+        }
+      }
+      //TODO
+      while (reducer.includes('+') || reducer.includes('-')) {
+        let i = 1;
+        while (i < reducer.length) {
+          if (/[+|-]/.test(reducer[i])) {
+            let left = reducer[i - 1];
+            let operator = reducer[i];
+            if (i + 1 === reducer.length) {
+              reducer.splice(i - 1, 2, left)
+              break;
+            } else {
+              let right = reducer[i + 1];
+              let result = operator === '+' ? Math.round((left + right) * 10000) / 10000 : Math.round((left - right) * 10000) / 10000;
+              reducer.splice(i - 1, 3, result)
+            }
+          }
+          i++;
+          console.log('reduced', reducer);
+        }
+      }
+      let result = reducer.reduce((total, num) => { total += num; return total; }, 0);
+      messages.push('=', result); // workaround, click AC to recalculator
+      parser = '';
       return { ...state, messages: messages, parser: parser, result: result };
     case CLEAR:
       return INTIAL_STATE;
