@@ -211,7 +211,7 @@ class Presentational extends React.Component {
           <button id="zero" onClick={this.clickHandler} value="0">0</button>
           <button id="decimal" onClick={this.clickHandler} value=".">.</button>
         </div>
-        <div><p>Coded by Yong Xia</p></div>
+        <p>Coded by Yong Xia <a href="https://github.com/yongxia/js-calculator" target="_blank" rel="noreferrer"><i className="fa fa-github"></i> Github</a></p>
       </div>
     )
   }
