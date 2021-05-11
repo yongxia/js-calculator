@@ -25,7 +25,7 @@ const clear = () => ({
 });
 
 const INTIAL_STATE = ({
-  messages: [],
+  messages: [], // store operators and numbers
   result: 0,
   parser: '' //--123+ parse to messages:['-', '-123'], parser: '+'
 });
@@ -92,7 +92,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       if (/^[*/]/.test(messages[0])) return state; //click AC to fix the formular no left
       console.log(messages);
       let reducer = [...messages];
-      //TODO
+      //TODO first order * or /
       while (reducer.includes('*') || reducer.includes('/')) {
         let i = 1;
         while (i < reducer.length) {
@@ -104,7 +104,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
               break;
             } else {
               let right = reducer[i + 1];
-              let result = operator === '*' ? left * right : Math.round(left / right * 10000) / 10000;
+              let result = operator === '*' ? Math.round(left * right * 10000) / 10000 : Math.round(left / right * 10000) / 10000;
               reducer.splice(i - 1, 3, result)
             }
           }
@@ -112,7 +112,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
           console.log('reduced', reducer);
         }
       }
-      //TODO
+      //TODO second order + or -
       while (reducer.includes('+') || reducer.includes('-')) {
         let i = 1;
         while (i < reducer.length) {
@@ -220,8 +220,6 @@ class Presentational extends React.Component {
 //react-dedux
 const store = createStore(calculatorReducer, devToolsEnhancer());
 const Container = connect(mapStateToProps, mapDispatchToProps)(Presentational);
-
-
 
 class CalculatorWrapper extends React.Component {
   render = () => (

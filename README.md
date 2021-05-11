@@ -1,5 +1,6 @@
 # js-calculator
-HTML, JavaScript, CSS, Bootstrap, SASS and jQuery. Frontend framework: React, Redux
+Formula/Expression Logic based Javascript Calculator
+HTML, JavaScript, CSS. Frontend framework: React, Redux
 
 # Getting Started with Create React App
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
