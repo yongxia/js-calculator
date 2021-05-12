@@ -36,16 +36,18 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
   let parser = state.parser;
   switch (action.type) {
     case MESSAGES:
-      if (messages.includes('=')) return state; // clear AC to start with a new cacluation
+      if (messages.includes('=') && state.result !== 0) {
+        messages = [state.result];
+      }
       parser += action.message;
       //reset to last operator (case: +/* followed by any operator, or - followed by +*/)
-      if (/^[+/*][+/*-]/.test(parser) || /^-[+/*]/.test(parser)) {
+      if (/^[+/*-][+/*]/.test(parser)) {
         parser = parser.substr(1);
         //reset to last operator (case: -- foloweed by any operator)
-      } else if (/^--[+/*-]/.test(parser)) {
+      } else if (/^[+*/-]-[+/*-]/.test(parser)) {
         parser = parser.substr(2);
-        // hanlde multiple zeros in beging of a number, allow 0. for float
       } else if (! /\d+[+*/-]$/.test(parser)) {
+        // hanlde multiple zeros in beging of a number, allow 0. for float
         if (/^[+*/]?-?0+$/.test(parser)) {
           parser = parser.replace(/0+/, '0');
         } else if (/^[+*/]?-?0+[1-9]$/.test(parser)) {
@@ -55,8 +57,8 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
         if ((parser.match(/\./g) || []).length > 1) {
           parser = parser.substring(0, parser.length - 1);
         }
-        //meet condition for parsing, ends with at least one digit and an operator
       } else {
+        //meet condition for parsing, ends with at least one digit and an operator
         //at the very beginng, there might not be an operator in parser
         if (/^[+/*-]/.test(parser)) {
           messages.push(parser.charAt(0));
@@ -73,7 +75,6 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       }
       return { ...state, messages: messages, parser: parser, result: parser };
     case RESULT:
-      if (messages.includes('=')) return state; // clear AC to start with a new cacluation
       //consume remaining parser if any
       if (/^[+*/-]/.test(parser)) {
         messages.push(parser.charAt(0));
@@ -86,6 +87,10 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
           }
           parser = '';
         }
+      }
+      // if there is no left hand for first operator in array, use 0
+      if (typeof messages[0] !== 'number') {
+        messages.unshift(0);
       }
       //calulate result Formula/Expression Logic
       if (messages.length <= 1) return state;
