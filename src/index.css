@@ -1,16 +1,24 @@
-@media only screen and (min-width: 390px) {
-  :root {
-    --calculator-width: 280px;
-    --calculator-fontsize: 2rem;
-    --calculator-padding: 1rem;
-  }
+:root {
+  --calculator-width: 320px;
+  --calculator-fontsize: 2rem;
+  --calculator-padding: 1rem;
+  --calculator-display-height: 40px;
+  --calculator-formula-height: 20px;
 }
 
-@media (max-width: 390px) {
+@media only screen and (min-device-width: 320px) and (max-device-width: 480px) {
   :root {
-    --calculator-width: 180px;
-    --calculator-fontsize: 1.5rem;
-    --calculator-padding: 0.5rem;
+    --calculator-width: 90vw;
+    --calculator-fontsize: 5rem;
+    --calculator-padding: 2rem;
+    --calculator-display-height: 6rem;
+    --calculator-formula-height: 4rem;
+  }
+  #formula {
+    color: orange;
+    height: var(--calculator-formula-height);
+    text-align: right;
+    font-size: 3rem;
   }
 }
 
@@ -63,14 +71,14 @@ button {
 }
 
 #display {
-  height: 40px;
+  height: var(--calculator-display-height);
   text-align: right;
   font-size: var(--calculator-fontsize);
 }
 
 #formula {
   color: orange;
-  height: 20px;
+  height: var(--calculator-formula-height);
   text-align: right;
 }
 
