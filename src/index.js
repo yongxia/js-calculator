@@ -46,14 +46,14 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
         parser = parser.substr(2);
         // hanlde multiple zeros in beging of a number, allow 0. for float
       } else if (! /\d+[+*/-]$/.test(parser)) {
-        if (/^[^1-9]+0+[1-9]$/.test(parser)) {
-          parser = parser.replace(/0+/, '');
-        } else if (/^[+*/-]+[^1-9]0+\.$/.test(parser)) {
+        if (/^[+*/]?-?0+$/.test(parser)) {
           parser = parser.replace(/0+/, '0');
+        } else if (/^[+*/]?-?0+[1-9]$/.test(parser)) {
+          parser = parser.replace(/0+/, '');
         }
         // only show one dot for float number
-        if (parser.endsWith('..')) {
-          parser = parser.replace('..', '.');
+        if ((parser.match(/\./g) || []).length > 1) {
+          parser = parser.substring(0, parser.length - 1);
         }
         //meet condition for parsing, ends with at least one digit and an operator
       } else {
@@ -71,7 +71,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
         //update parser for next parse
         parser = parser.substring(parser.length - 1);
       }
-      return { ...state, messages: messages, parser: parser };
+      return { ...state, messages: messages, parser: parser, result: parser };
     case RESULT:
       if (messages.includes('=')) return state; // clear AC to start with a new cacluation
       //consume remaining parser if any
