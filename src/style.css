@@ -18,6 +18,8 @@
   button {
     -webkit-appearance: none;
     border-radius: 0;
+    background-color: #868ca0;
+    color: white;
   }
   #formula {
     color: orange;
@@ -61,8 +63,8 @@ body {
 
 button {
   font-size: var(--calculator-fontsize);
-  font-family: 'ZCOOL QingKe HuangYou', cursive;
   padding: var(--calculator-padding) 0;
+  font-family: 'ZCOOL QingKe HuangYou';
 }
 
 #clear {
@@ -79,15 +81,16 @@ button {
 
 #display {
   height: var(--calculator-display-height);
-  font-family: 'ZCOOL QingKe HuangYou', cursive;
   text-align: right;
   font-size: var(--calculator-fontsize);
+  font-family: 'ZCOOL QingKe HuangYou';
 }
 
 #formula {
   color: orange;
   height: var(--calculator-formula-height);
   text-align: right;
+  font-family: 'ZCOOL QingKe HuangYou';
 }
 
 a {
