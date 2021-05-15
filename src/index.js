@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
 import { devToolsEnhancer } from 'redux-devtools-extension';
-import './index.css';
+import './style.css';
 import { connect, Provider } from 'react-redux'
 
 //Redux
@@ -36,7 +36,7 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
   let parser = state.parser;
   switch (action.type) {
     case MESSAGES:
-      if (messages.includes('=') && state.result !== 0) {
+      if (messages.includes('=')) {
         messages = [state.result];
       }
       parser += action.message;
@@ -92,55 +92,43 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       if (typeof messages[0] !== 'number') {
         messages.unshift(0);
       }
+      // no right hand number return current state
+      if (messages.length <= 2 || typeof messages[messages.length - 1] !== 'number') return state;
+
       //calulate result Formula/Expression Logic
-      if (messages.length <= 1) return state;
-      if (/^[*/]/.test(messages[0])) return state; //click AC to fix the formular no left
-      console.log(messages);
-      let reducer = [...messages];
-      //TODO first order * or /
-      while (reducer.includes('*') || reducer.includes('/')) {
-        let i = 1;
-        while (i < reducer.length) {
-          if (/[*|/]/.test(reducer[i])) {
-            let left = reducer[i - 1];
-            let operator = reducer[i];
-            if (i + 1 === reducer.length) {
-              reducer.splice(i - 1, 2, left)
-              break;
-            } else {
-              let right = reducer[i + 1];
-              let result = operator === '*' ? Math.round(left * right * 10000) / 10000 : Math.round(left / right * 10000) / 10000;
-              reducer.splice(i - 1, 3, result)
-            }
+      let reduced = [...messages];
+      while (reduced.includes('*') || reduced.includes('/')) {
+        let i = 1; // always start from beging as the array changes
+        while (i < reduced.length - 1) {
+          if (/[*|/]/.test(reduced[i])) {
+            let left = reduced[i - 1];
+            let operator = reduced[i];
+            let right = reduced[i + 1];
+            let result = operator === '*' ? Math.round(left * right * 10000) / 10000 : Math.round(left / right * 10000) / 10000;
+            reduced.splice(i - 1, 3, result);
           }
           i++;
-          console.log('reduced', reducer);
         }
+        console.log('reduced', reduced);
       }
-      //TODO second order + or -
-      while (reducer.includes('+') || reducer.includes('-')) {
+
+      while (reduced.includes('+') || reduced.includes('-')) {
         let i = 1;
-        while (i < reducer.length) {
-          if (/[+|-]/.test(reducer[i])) {
-            let left = reducer[i - 1];
-            let operator = reducer[i];
-            if (i + 1 === reducer.length) {
-              reducer.splice(i - 1, 2, left)
-              break;
-            } else {
-              let right = reducer[i + 1];
-              let result = operator === '+' ? Math.round((left + right) * 10000) / 10000 : Math.round((left - right) * 10000) / 10000;
-              reducer.splice(i - 1, 3, result)
-            }
+        while (i < reduced.length - 1) {
+          if (/[+|-]/.test(reduced[i])) {
+            let left = reduced[i - 1];
+            let operator = reduced[i];
+            let right = reduced[i + 1];
+            let result = operator === '+' ? Math.round((left + right) * 10000) / 10000 : Math.round((left - right) * 10000) / 10000;
+            reduced.splice(i - 1, 3, result)
           }
-          i++;
-          console.log('reduced', reducer);
         }
+        i++;
+        console.log('reduced', reduced);
       }
-      let result = reducer.reduce((total, num) => { total += num; return total; }, 0);
-      messages.push('=', result); // workaround, click AC to recalculator
-      parser = '';
-      return { ...state, messages: messages, parser: parser, result: result };
+      let result = reduced[0];
+      messages.push('=', result);
+      return { ...state, messages: messages, parser: '', result: result };
     case CLEAR:
       return INTIAL_STATE;
     default:
