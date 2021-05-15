@@ -37,7 +37,11 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
   switch (action.type) {
     case MESSAGES:
       if (messages.includes('=')) {
-        messages = [state.result];
+        if (/[+*/-]/.test(action.message)) { //user previous result
+          messages = [state.result];
+        } else {
+          messages = []; //new calculation
+        }
       }
       parser += action.message;
       //reset to last operator (case: +/* followed by any operator, or - followed by +*/)

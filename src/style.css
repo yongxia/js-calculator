@@ -15,7 +15,7 @@
     --calculator-display-height: 6rem;
     --calculator-formula-height: 4rem;
   }
-  input, textarea {
+  button {
     -webkit-appearance: none;
     border-radius: 0;
   }
