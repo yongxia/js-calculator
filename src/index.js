@@ -98,39 +98,8 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       }
       // no right hand number return current state
       if (messages.length <= 2 || typeof messages[messages.length - 1] !== 'number') return state;
-
-      //calulate result Formula/Expression Logic
-      let reduced = [...messages];
-      while (reduced.includes('*') || reduced.includes('/')) {
-        let i = 1; // always start from beging as the array changes
-        while (i < reduced.length - 1) {
-          if (/[*|/]/.test(reduced[i])) {
-            let left = reduced[i - 1];
-            let operator = reduced[i];
-            let right = reduced[i + 1];
-            let result = operator === '*' ? Math.round(left * right * 10000) / 10000 : Math.round(left / right * 10000) / 10000;
-            reduced.splice(i - 1, 3, result);
-          }
-          i++;
-        }
-        console.log('reduced', reduced);
-      }
-
-      while (reduced.includes('+') || reduced.includes('-')) {
-        let i = 1;
-        while (i < reduced.length - 1) {
-          if (/[+|-]/.test(reduced[i])) {
-            let left = reduced[i - 1];
-            let operator = reduced[i];
-            let right = reduced[i + 1];
-            let result = operator === '+' ? Math.round((left + right) * 10000) / 10000 : Math.round((left - right) * 10000) / 10000;
-            reduced.splice(i - 1, 3, result)
-          }
-        }
-        i++;
-        console.log('reduced', reduced);
-      }
-      let result = reduced[0];
+      const expression = messages.join(' ');
+      let result = eval(expression);
       messages.push('=', result);
       return { ...state, messages: messages, parser: '', result: result };
     case CLEAR:
