@@ -31,6 +31,10 @@ const INTIAL_STATE = ({
   parser: ''
 });
 
+const isOperator = /[+*/-]/;
+const startsWithOperatorFollowedByNonNegative = /^[+/*-][+/*]/;
+const startsWithOperatorFollowedByNegativeAndOperator = /^[+*/-]-[+/*-]/;
+const endsWithOperator = /\d+[+*/-]$/;
 
 const calculatorReducer = (state = INTIAL_STATE, action) => {
   let equation = [...state.equation];
@@ -40,15 +44,14 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
       parser += action.message;
       //case: use previous result
       if (equation.includes('=')) {
-        equation = /[+*/-]/.test(action.message) ? [state.result] : [];
+        equation = isOperator.test(action.message) ? [state.result] : [];
       }
-      //case: reset to last operator (+/-* followed by +/*)
-      if (/^[+/*-][+/*]/.test(parser)) {
-        parser = parser.substr(1);
-        //reset to last operator (case: -- foloweed by any operator)
-      } else if (/^[+*/-]-[+/*-]/.test(parser)) {
-        parser = parser.substr(2);
-      } else if (! /\d+[+*/-]$/.test(parser)) {
+      //case: reset to last operator 
+      if (startsWithOperatorFollowedByNonNegative.test(parser)) { //(+/-* followed by +/*)
+        parser = parser.substring(1);
+      } else if (startsWithOperatorFollowedByNegativeAndOperator.test(parser)) {
+        parser = parser.substring(2);
+      } else if (!endsWithOperator.test(parser)) {
         // hanlde multiple zeros in beging of a number, allow 0. for float
         if (/^[+*/]?-?0+$/.test(parser)) {
           parser = parser.replace(/0+/, '0');
@@ -63,43 +66,33 @@ const calculatorReducer = (state = INTIAL_STATE, action) => {
         //meet condition for parsing, ends with at least one digit and an operator
         //at the very beginng, there might not be an operator in parser
         if (/^[+/*-]/.test(parser)) {
-          equation.push(parser.charAt(0));
-          parser = parser.substring(1); //consume operator, '--1.23+' => '-1.23+' , messages:['-']
+          equation.push(parser[0]);
+          parser = parser.substring(1); //parse operator, '--1.23+' => '-1.23+', ['-']
         }
-        //continue consume parser number part, messages: ['-',-1.23], parser: '+'
-        if (parser.includes('.')) {
-          equation.push(parseFloat(parser.substring(0, parser.length - 1)));
-        } else {
-          equation.push(parseInt(parser.substring(0, parser.length - 1)));
-        }
+        //parse number part
+        equation.push(parser.substring(0, parser.length - 1));
         //update parser for next parse
-        parser = parser.substring(parser.length - 1);
+        parser = parser[parser.length - 1];
       }
       return { ...state, equation: equation, parser: parser, result: parser };
     case RESULT:
-      //consume remaining parser if any
+      //parse remaining if any
       if (/^[+*/-]/.test(parser)) {
-        equation.push(parser.charAt(0));
+        equation.push(parser[0]);
         parser = parser.substring(1);
         if (parser.length > 0) {
-          if (parser.includes('.')) {
-            equation.push(parseFloat(parser));
-          } else {
-            equation.push(parseInt(parser));
-          }
+          equation.push(parser);
           parser = '';
         }
       }
-      // no right hand number return current state
-      if (equation.length <= 2 || typeof equation[equation.length - 1] !== 'number') return state;
+      // no left or right hand number return current state
+      if (equation.length <= 2 || !/\d$/.test(equation[equation.length - 1])) return state;
 
       let expression = equation.join(' ');
-
       // no left hand for first operator in expression, add 0
       if (typeof equation[0] !== 'number') {
         expression = '0 + ' + expression;
       }
-
       let result = Math.round(eval(expression) * 10000) / 10000;
       equation.push('=', result);
       return { ...state, equation: equation, parser: '', result: result };
